@@ -1,74 +1,151 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Canvas from './Canvas'
+import  Wall  from './Wall.js'
+import  Cloud  from './Cloud.js'
+import Projectile from './Projectile';
 
-let cloud1_x = 0;
-let cloud1_y = 0;
+function restart(){
+    projectiles = [];
+    over = false;
+    clouds[0].x = 40;
+    clouds[0].y = 40;
 
-let cloud1_up = false;
-let cloud1_down = false;
-let cloud1_left = false;
-let cloud1_right = false;
+    clouds[1].x = 280;
+    clouds[1].y = 280;
+}
 
-let cloud2_x = 100;
-let cloud2_y = 100;
+/**
+ * MAKE FUNCTIONS
+ * 
+ * Create cloud and wall objects.
+ */
+function makeClouds(){
 
-let cloud2_up = false;
-let cloud2_down = false;
-let cloud2_left = false;
-let cloud2_right = false;
+    return [new Cloud("RainCloud.png",40,40,1), new Cloud("SnowCloud.png",280,280,2)]
+}
+const clouds = makeClouds();
 
-// Create new img element
-const cloud1 = new Image();
-const cloud2 = new Image();
+function makeWalls(){
+    const walls = [];
 
-// Set source path
-cloud1.src = "RainCloud.png";  
-cloud2.src = "SnowCloud.png";
+    // top and bottom
+    for (let x = 0; x < 10; x++) {
+        walls.push(new Wall(40*x,0));
+        walls.push(new Wall(x*40,360))
+    }
+    
+    // sides
+    for (let y = 1; y < 9; y++) {
+        walls.push(new Wall(0,40*y));
+        walls.push(new Wall(360,40*y));        
+    }
+
+    for(let x = 1; x < 6; x++){
+        walls.push(new Wall(40*x,120));
+        walls.push(new Wall(40*(x+3),240));
+    }
+
+    return walls;
+}
+
+
+const walls = makeWalls();
+var projectiles = [];
+var over = false;
+var winner;
+
+/**
+ *
+ * DRAW FUNCTIONS
+ *
+ * Draw shit
+ */
+
+function drawWalls (ctx,frameCount) {    
+    for (let index = 0; index < walls.length; index++) {
+        const wall = walls[index];
+        ctx.drawImage(wall.image,wall.x,wall.y);     
+    }
+}
+
+function drawClouds (ctx,frameCount){
+
+    for (let index = 0; index < clouds.length; index++) {
+
+        const cloud = clouds[index];
+
+        cloud.move(walls);
+
+        ctx.drawImage(cloud.image,cloud.x,cloud.y);
+    }
+}
+
+function drawProjectiles(ctx,frameCount) {
+    for (let index = 0; index < projectiles.length; index++){
+        const p = projectiles[index];
+        if(p != null){
+            p.move();
+            ctx.drawImage(p.image, p.x, p.y);
+        }
+
+    }
+}
+
+function updateProjectiles() {
+    for (let index = 0; index < projectiles.length; index++) {
+        const p = projectiles[index];
+        if(p != null){
+            if(p.isCollision(walls)){
+                projectiles[index] = null;
+            }
+
+            if(p.isPlayer(clouds)){
+                over = true;
+                winner = p.creator;
+            }
+        }        
+    }
+    return projectiles;
+}
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 
+/**
+ * 
+ * WEIRD REACT STUFF
+ */
 const Game = () => {
     const draw = (ctx, frameCount) => {
         // Check if player moved
-        if(cloud1_up){
-            cloud1_y -= 1;
-        }
-
-        if(cloud1_down){
-            cloud1_y += 1;
-        }
-
-        if(cloud1_left){
-            cloud1_x -= 1;
-        }
-
-        if(cloud1_right){
-            cloud1_x += 1;
-        }
-
-        if(cloud2_up){
-            cloud2_y -= 1;
-        }
-
-        if(cloud2_down){
-            cloud2_y += 1;
-        }
-
-        if(cloud2_left){
-            cloud2_x -= 1;
-        }
-
-        if(cloud2_right){
-            cloud2_x += 1;
-        }
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-        ctx.drawImage(cloud1,cloud1_x,cloud1_y);
-        ctx.drawImage(cloud2,cloud2_x,cloud2_y);
-        ctx.beginPath()
-        ctx.fill()
-      }
+        if(over){
+            ctx.font = "48px Arial";
+            ctx.fillStyle = "White";
+            ctx.fillText("Game Over", 70, 200);
+            ctx.font = "26px Arial";
+            if(winner === 1){
+                ctx.fillStyle = "White";
+                ctx.fillText("Player One Wins", 100, 260);
+            }else{
+                ctx.fillStyle = "White";
+                ctx.fillText("Player Two Wins", 100, 260);
+            }
+            ctx.beginPath();
+            ctx.fill();
+
+        } else {
+            drawWalls(ctx,frameCount);
+            drawClouds(ctx,frameCount);
+            drawProjectiles(ctx,frameCount);
+            ctx.beginPath();
+            ctx.fill();
+            updateProjectiles();
+        }
+
+    }
+
     return (
         <div>
             <ul>
@@ -81,55 +158,67 @@ const Game = () => {
                     <Link to="/game">Game</Link>
                 </li>
             </ul>
-            <h1>Xcloud</h1>
-            <p>player 1: w,a,s,d</p>
-            <p>player 2: up, down, left, right</p>
-            <Canvas draw={draw} />
+            <div>
+                <h1>Xcloud</h1>
+                <p>player 1: move  w, a, s, d  shoot f</p>
+                <p>player 2: move  i, j, k, l  shoot h</p>
+                <p>restart: space bar</p>
+                <Canvas width={400} height={400} draw={draw} />
+            </div>
         </div>
     )
 }
 
 export default Game;
 
+/**
+ * 
+ * CONTROLS
+ * 
+ * gross ass event handling
+ */
 function keyDownHandler(e) {
     if (e.key === "w") {
-        cloud1_up = true;
+        clouds[0].up = true;
     } else if (e.key === "s") {
-        cloud1_down = true;
+        clouds[0].down = true;
     } else if (e.key === "a") {
-        cloud1_left = true;
+        clouds[0].left = true;
     } else if (e.key === "d") {
-        cloud1_right = true;
-    } else if (e.key === "Up" || e.key === "ArrowUp") {
-        cloud2_up = true;
-    } else if (e.key === "Down" || e.key === "ArrowDown") {
-        cloud2_down = true;
-    } else if (e.key === "Left" || e.key === "ArrowLeft") {
-          cloud2_left = true;
-    } else if (e.key === "Down" || e.key === "ArrowRight") {
-          cloud2_right = true;
+        clouds[0].right = true;
+    } else if (e.key === "i") {
+        clouds[1].up = true;
+    } else if (e.key === "k") {
+        clouds[1].down = true;
+    } else if (e.key === "j") {
+          clouds[1].left = true;
+    } else if (e.key === "l") {
+          clouds[1].right = true;
+    } else if (e.key === "f"){
+        projectiles.push(new Projectile(clouds,1));
+    } else if (e.key === "h"){
+        projectiles.push(new Projectile(clouds,2));    
     }
 }
   
 function keyUpHandler(e) {
-    if (e.key == "w") {
-        cloud1_up = false;
+    if (e.key === "w") {
+        clouds[0].up = false;
     } else if (e.key === "s") {
-        cloud1_down = false;
+        clouds[0].down = false;
     } else if (e.key === "a") {
-        cloud1_left = false;
+        clouds[0].left = false;
     } else if (e.key === "d") {
-        cloud1_right = false;
-    } else if (e.key === "Up" || e.key === "ArrowUp") {
-        cloud2_up = false;
-    } else if (e.key === "Down" || e.key === "ArrowDown") {
-        cloud2_down = false;
-    } else if (e.key === "Left" || e.key === "ArrowLeft") {
-        cloud2_left = false;
-    } else if (e.key === "Down" || e.key === "ArrowRight") {
-        cloud2_right = false;
+        clouds[0].right = false;
+    } else if (e.key === "i") {
+        clouds[1].up = false;
+    } else if (e.key === "k") {
+        clouds[1].down = false;
+    } else if (e.key === "j") {
+        clouds[1].left = false;
+    } else if (e.key === "l") {
+        clouds[1].right = false;
+    } else if (e.key === " ") {
+        restart();
     }
 }  
-
-
-
