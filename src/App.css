@@ -3,6 +3,18 @@ body {
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
   color: white;
   background-color: black;
+  background-image: url("bg.jpg");
+}
+
+.about{
+  height: 33%;
+  width: 33%;
+  padding: 1%;
+  border: solid #ffffff;
+  border-width: 1px 1px;
+  border-radius: 5px;
+  background-color: black;
+  opacity: 0.75;
 }
 
 h1{
@@ -33,6 +45,23 @@ li a {
 /* Change the link color on hover */
 li a:hover {
   border-color: white;
+}
+
+table{
+  border-radius: 5px;
+  background-color: black;
+  opacity: 0.75;
+  border-collapse: collapse;
+}
+td {
+  border: solid #ffffff;
+  border-width: 1px 1px;
+}
+
+th, td {
+  padding: 1px;
+  text-align: center;
+  padding: 5px;
 }
 
 canvas {

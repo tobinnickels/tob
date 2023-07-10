@@ -4,10 +4,12 @@ import Canvas from './Canvas'
 import  Wall  from './Wall.js'
 import  Cloud  from './Cloud.js'
 import Projectile from './Projectile';
+import { useState } from 'react';
 
 function restart(){
     projectiles = [];
     over = false;
+    updated = false;
     clouds[0].x = 40;
     clouds[0].y = 40;
 
@@ -53,6 +55,7 @@ function makeWalls(){
 const walls = makeWalls();
 var projectiles = [];
 var over = false;
+var updated = false;
 var winner;
 
 /**
@@ -76,6 +79,7 @@ function drawClouds (ctx,frameCount){
         const cloud = clouds[index];
 
         cloud.move(walls);
+
 
         ctx.drawImage(cloud.image,cloud.x,cloud.y);
     }
@@ -117,10 +121,12 @@ document.addEventListener("keyup", keyUpHandler, false);
  * WEIRD REACT STUFF
  */
 const Game = () => {
+    const [w1, setw1] = useState(0);
+    const [w2, setw2] = useState(0);
     const draw = (ctx, frameCount) => {
-        // Check if player moved
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
         if(over){
+
             ctx.font = "48px Arial";
             ctx.fillStyle = "White";
             ctx.fillText("Game Over", 70, 200);
@@ -128,12 +134,19 @@ const Game = () => {
             if(winner === 1){
                 ctx.fillStyle = "White";
                 ctx.fillText("Player One Wins", 100, 260);
+                if(!updated){
+                    setw1(w1 + 1);
+                }
             }else{
                 ctx.fillStyle = "White";
                 ctx.fillText("Player Two Wins", 100, 260);
+                if(!updated){
+                    setw2(w2 + 1);
+                }
             }
             ctx.beginPath();
             ctx.fill();
+            updated = true;
 
         } else {
             drawWalls(ctx,frameCount);
@@ -160,9 +173,26 @@ const Game = () => {
             </ul>
             <div>
                 <h1>Xcloud</h1>
-                <p>player 1: move  w, a, s, d  shoot f</p>
-                <p>player 2: move  i, j, k, l  shoot h</p>
-                <p>restart: space bar</p>
+                <table>
+                <tr>
+                    <th></th>
+                    <th>move</th>
+                    <th>shoot</th>
+                    <th>wins</th>
+                </tr>
+                <tr>
+                    <td>player one</td>
+                    <td>w, a, s, d</td>
+                    <td>f</td>
+                    <td>{w1}</td>
+                </tr>
+                <tr>
+                    <td>player two</td>
+                    <td>i, j, k, l</td>
+                    <td>h</td>
+                    <td>{w2}</td>
+                </tr>
+            </table>
                 <Canvas width={400} height={400} draw={draw} />
             </div>
         </div>
